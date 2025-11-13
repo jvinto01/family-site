@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Family Memories</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #f4f4f7;
+      color: #222;
+    }
+
+    header {
+      position: relative;
+      text-align: center;
+      color: #fff;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .banner-image {
+      width: 100%;
+      max-height: 360px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .banner-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.6));
+    }
+
+    .banner-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .banner-text h1 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.3em;
+    }
+
+    .banner-text p {
+      font-size: 1rem;
+      opacity: 0.95;
+    }
+
+    nav {
+      background: #ffffff;
+      border-bottom: 1px solid #e4e4e8;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      padding: 0.75rem 1rem;
+      flex-wrap: wrap;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #444;
+      font-weight: 600;
+      padding: 0.35rem 0.8rem;
+      border-radius: 999px;
+      transition: background 0.2s, color 0.2s, transform 0.1s;
+    }
+
+    nav a:hover {
+      background: #406aff18;
+      color: #2d4f9f;
+      transform: translateY(-1px);
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 1.5rem auto 3rem;
+      padding: 0 1rem;
+    }
+
+    section {
+      background: #ffffff;
+      margin-bottom: 1.5rem;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+    }
+
+    section h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    section p.section-intro {
+      margin-bottom: 1rem;
+      color: #555;
+    }
+
+    .media-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .media-card {
+      background: #f9fafb;
+      border-radius: 0.9rem;
+      padding: 0.6rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .media-card img,
+    .media-card video {
+      width: 100%;
+      border-radius: 0.7rem;
+      display: block;
+    }
+
+    /* NEW: Make YouTube embeds responsive */
+    .media-card iframe {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 0.7rem;
+    }
+
+    .media-card span {
+      font-size: 0.85rem;
+      color: #555;
+    }
+
+    .upload-hint {
+      font-size: 0.85rem;
+      color: #777;
+      margin-top: 0.75rem;
+    }
+
+    .file-input {
+      margin-top: 0.5rem;
+    }
+
+    .comment-form {
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .comment-form input,
+    .comment-form textarea {
+      width: 100%;
+      padding: 0.6rem 0.7rem;
+      border-radius: 0.6rem;
+      border: 1px solid #d0d4dd;
+      font: inherit;
+    }
+
+    .comment-form textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .btn {
+      align-self: flex-start;
+      padding: 0.5rem 1.2rem;
+      border-radius: 999px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      background: #315fe4;
+      color: #fff;
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
+      transition: transform 0.08s, box-shadow 0.08s, opacity 0.2s;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #777;
+      padding-bottom: 2rem;
+    }
+
+    @media (max-width: 600px) {
+      section {
+        border-radius: 0.75rem;
+        padding: 1.2rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <img src="banner.jpg" alt="Family Memories Banner" class="banner-image" />
+    <div class="banner-overlay"></div>
+    <div class="banner-text">
+      <h1>Family Memories</h1>
+      <p>Our “Hugga Hoops” Adventures &amp; More</p>
+    </div>
+  </header>
+
+  <nav>
+    <ul>
+      <li><a href="#about">Home</a></li>
+      <li><a href="#photos">Photos</a></li>
+      <li><a href="#videos">Videos</a></li>
+      <li><a href="#comments">Guestbook</a></li>
+    </ul>
+  </nav>
+
+  <main>
+
+    <section id="about">
+      <h2>Welcome, Family &amp; Friends!</h2>
+      <p class="section-intro">
+        This little site is our spot for collecting stories, photos, and videos from all of our
+        “Hugga Hoops” adventures and family gatherings. Add your memories and say hi in the guestbook below.
+      </p>
+    </section>
+
+    <section id="photos">
+      <h2>Photo Gallery</h2>
+      <p class="section-intro">
+        Add your favorite snapshots from vacations, holidays, and everyday moments.
+      </p>
+
+      <div class="media-grid" id="photoGrid">
+        <div class="media-card">
+          <img src="family_lake.jpg" alt="Family at the lake" />
+          <span>Summer at the lake</span>
+        </div>
+        <div class="media-card">
+          <img src="cabin_trip.jpg" alt="Cabin trip" />
+          <span>Cabin weekend</span>
+        </div>
+      </div>
+
+      <p class="upload-hint">
+        Add more pictures (preview only – this doesn’t upload them to a server):
+      </p>
+      <input class="file-input" type="file" accept="image/*" multiple id="photoInput" />
+    </section>
+
+    <!-- UPDATED VIDEOS SECTION WITH PLAYLIST -->
+    <section id="videos">
+      <h2>Video Gallery</h2>
+      <p class="section-intro">
+        Watch our Hugga Hoops and family videos! Playlist updates automatically.
+      </p>
+
+      <div class="media-grid" id="videoGrid">
+
+        <!-- YouTube Playlist Card (your playlist) -->
+        <div class="media-card">
+          <iframe 
+            src="https://www.youtube.com/embed/videoseries?list=PLF0dSSzU0Xsg-JhzeJfeTHygpNXBfZf79"
+            allowfullscreen>
+          </iframe>
+          <span>Our Family YouTube Playlist</span>
+        </div>
+
+        <!-- (You can remove this original MP4 example if you want) -->
+        <div class="media-card">
+          <video controls>
+            <source src="hugga_hoops_game.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <span>Hugga Hoops in the driveway</span>
+        </div>
+
+      </div>
+
+    </section>
+
+    <section id="comments">
+      <h2>Guestbook &amp; Comments</h2>
+      <p class="section-intro">
+        Leave a note, a memory, or a shout-out for the family.
+      </p>
+
+      <form class="comment-form" id="commentForm">
+        <input type="text" id="nameInput" placeholder="Your name" required />
+        <textarea id="messageInput" placeholder="Your message" required></textarea>
+        <button type="submit" class="btn">Post Comment</button>
+      </form>
+
+      <div class="comment-list" id="commentList"></div>
+      <p class="upload-hint">
+        Comments are stored in this browser only (using localStorage). To share across devices, you’ll
+        need a small server later.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    &copy; <span id="year"></span> Our Family. All hugs reserved.
+  </footer>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    const photoInput = document.getElementById("photoInput");
+    const photoGrid = document.getElementById("photoGrid");
+
+    photoInput.addEventListener("change", (event) => {
+      const files = Array.from(event.target.files);
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const card = document.createElement("div");
+          card.className = "media-card";
+          const img = document.createElement("img");
+          img.src = e.target.result;
+          img.alt = file.name;
+          const caption = document.createElement("span");
+          caption.textContent = file.name;
+          card.appendChild(img);
+          card.appendChild(caption);
+          photoGrid.prepend(card);
+        };
+        reader.readAsDataURL(file);
+      });
+      photoInput.value = "";
+    });
+
+    const videoInput = document.getElementById("videoInput");
+    const videoGrid = document.getElementById("videoGrid");
+
+    const commentForm = document.getElementById("commentForm");
+    const commentList = document.getElementById("commentList");
+    const STORAGE_KEY = "familySiteComments";
+
+    function loadComments() {
+      const data = localStorage.getItem(STORAGE_KEY);
+      const comments = data ? JSON.parse(data) : [];
+      commentList.innerHTML = "";
+      comments.forEach(addCommentToDOM);
+    }
+
+    function saveComment(comment) {
+      const data = localStorage.getItem(STORAGE_KEY);
+      const comments = data ? JSON.parse(data) : [];
+      comments.unshift(comment);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
+    }
+
+    function addCommentToDOM(comment) {
+      const div = document.createElement("div");
+      div.className = "comment";
+
+      const header = document.createElement("div");
+      header.className = "comment-header";
+
+      const nameSpan = document.createElement("span");
+      nameSpan.textContent = comment.name || "Anonymous";
+
+      const dateSpan = document.createElement("span");
+      dateSpan.className = "comment-date";
+      dateSpan.textContent = new Date(comment.date).toLocaleString();
+
+      header.appendChild(nameSpan);
+      header.appendChild(dateSpan);
+
+      const body = document.createElement("div");
+      body.textContent = comment.message;
+
+      div.appendChild(header);
+      div.appendChild(body);
+      commentList.appendChild(div);
+    }
+
+    commentForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = document.getElementById("nameInput").value.trim();
+      const message = document.getElementById("messageInput").value.trim();
+      if (!message) return;
+
+      const comment = {
+        name: name || "Anonymous",
+        message,
+        date: new Date().toISOString()
+      };
+
+      saveComment(comment);
+      commentList.innerHTML = "";
+      loadComments();
+      commentForm.reset();
+    });
+
+    loadComments();
+  </script>
+
+</body>
+</html>
