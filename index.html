@@ -253,27 +253,35 @@
     </section>
 
     <section id="photos">
-      <h2>Photo Gallery</h2>
-      <p class="section-intro">
-        Add your favorite snapshots from vacations, holidays, and everyday moments.
-      </p>
+  <h2>Photo Gallery</h2>
+  <p class="section-intro">
+    Shared family photos stored right in our website.
+  </p>
 
-      <div class="media-grid" id="photoGrid">
-        <div class="media-card">
-          <img src="family_lake.jpg" alt="Family at the lake" />
-          <span>Summer at the lake</span>
-        </div>
-        <div class="media-card">
-          <img src="cabin_trip.jpg" alt="Cabin trip" />
-          <span>Cabin weekend</span>
-        </div>
-      </div>
+  <div class="media-grid" id="photoGrid">
+    <!-- Replace these with your real filenames in the images/ folder -->
+    <div class="media-card">
+      <img src="images/hugga_hoops_driveway.jpg" alt="Hugga Hoops in the driveway" />
+      <span>Hugga Hoops in the driveway</span>
+    </div>
 
-      <p class="upload-hint">
-        Add more pictures (preview only – this doesn’t upload them to a server):
-      </p>
-      <input class="file-input" type="file" accept="image/*" multiple id="photoInput" />
-    </section>
+    <div class="media-card">
+      <img src="images/family_picnic.jpg" alt="Family picnic" />
+      <span>Family picnic</span>
+    </div>
+
+    <div class="media-card">
+      <img src="images/lake_trip.jpg" alt="Trip to the lake" />
+      <span>Trip to the lake</span>
+    </div>
+  </div>
+
+  <p class="upload-hint">
+    To add more photos, upload new image files to the <code>images/</code> folder in this
+    site’s GitHub repository and then add another card here.
+  </p>
+</section>
+
 
     <!-- UPDATED VIDEOS SECTION WITH PLAYLIST -->
     <section id="videos">
