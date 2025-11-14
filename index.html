@@ -322,55 +322,75 @@
     &copy; <span id="year"></span> Our Family. All hugs reserved.
   </footer>
 
-  <script>
+    <footer>
+    &copy; <span id="year"></span> Our Family. All hugs reserved.
+  </footer>
+
+  <!-- Firebase + Comments script -->
+  <script type="module">
+    // 1) IMPORT FIREBASE (from CDN)
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js';
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      serverTimestamp,
+      query,
+      orderBy,
+      onSnapshot
+    } from 'https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js';
+
+    // 2) YOUR FIREBASE CONFIG (copy from Firebase console)
+    //    Replace the object below with the one Firebase showed you.
+    const firebaseConfig = {
+  apiKey: "AIzaSyCu53uXzxta6-BVRDkswHOnUj1o-ArWlg8",
+  authDomain: "family-hugga-hoops.firebaseapp.com",
+  projectId: "family-hugga-hoops",
+  storageBucket: "family-hugga-hoops.firebasestorage.app",
+  messagingSenderId: "956703329830",
+  appId: "1:956703329830:web:72441c89275022e1c060e7"
+};
+
+    // 3) INITIALIZE FIREBASE + FIRESTORE
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const commentsCol = collection(db, "comments"); // collection name in Firestore
+
+    // 4) EXISTING DOM HOOKS
     document.getElementById("year").textContent = new Date().getFullYear();
 
     const photoInput = document.getElementById("photoInput");
-    const photoGrid = document.getElementById("photoGrid");
+    const photoGrid  = document.getElementById("photoGrid");
 
-    photoInput.addEventListener("change", (event) => {
-      const files = Array.from(event.target.files);
-      files.forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const card = document.createElement("div");
-          card.className = "media-card";
-          const img = document.createElement("img");
-          img.src = e.target.result;
-          img.alt = file.name;
-          const caption = document.createElement("span");
-          caption.textContent = file.name;
-          card.appendChild(img);
-          card.appendChild(caption);
-          photoGrid.prepend(card);
-        };
-        reader.readAsDataURL(file);
+    const commentForm  = document.getElementById("commentForm");
+    const commentList  = document.getElementById("commentList");
+
+    // 5) PHOTO PREVIEW (same behavior as before)
+    if (photoInput) {
+      photoInput.addEventListener("change", (event) => {
+        const files = Array.from(event.target.files);
+        files.forEach((file) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const card = document.createElement("div");
+            card.className = "media-card";
+            const img = document.createElement("img");
+            img.src = e.target.result;
+            img.alt = file.name;
+            const caption = document.createElement("span");
+            caption.textContent = file.name;
+            card.appendChild(img);
+            card.appendChild(caption);
+            photoGrid.prepend(card);
+          };
+          reader.readAsDataURL(file);
+        });
+        photoInput.value = "";
       });
-      photoInput.value = "";
-    });
-
-    const videoInput = document.getElementById("videoInput");
-    const videoGrid = document.getElementById("videoGrid");
-
-    const commentForm = document.getElementById("commentForm");
-    const commentList = document.getElementById("commentList");
-    const STORAGE_KEY = "familySiteComments";
-
-    function loadComments() {
-      const data = localStorage.getItem(STORAGE_KEY);
-      const comments = data ? JSON.parse(data) : [];
-      commentList.innerHTML = "";
-      comments.forEach(addCommentToDOM);
     }
 
-    function saveComment(comment) {
-      const data = localStorage.getItem(STORAGE_KEY);
-      const comments = data ? JSON.parse(data) : [];
-      comments.unshift(comment);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
-    }
-
-    function addCommentToDOM(comment) {
+    // 6) RENDER A SINGLE COMMENT INTO THE DOM
+    function addCommentToDOM(data) {
       const div = document.createElement("div");
       div.className = "comment";
 
@@ -378,43 +398,62 @@
       header.className = "comment-header";
 
       const nameSpan = document.createElement("span");
-      nameSpan.textContent = comment.name || "Anonymous";
+      nameSpan.textContent = data.name || "Anonymous";
 
       const dateSpan = document.createElement("span");
       dateSpan.className = "comment-date";
-      dateSpan.textContent = new Date(comment.date).toLocaleString();
+
+      // If Firestore timestamp exists, show it; else blank
+      if (data.date && data.date.toDate) {
+        dateSpan.textContent = data.date.toDate().toLocaleString();
+      } else {
+        dateSpan.textContent = "";
+      }
 
       header.appendChild(nameSpan);
       header.appendChild(dateSpan);
 
       const body = document.createElement("div");
-      body.textContent = comment.message;
+      body.textContent = data.message;
 
       div.appendChild(header);
       div.appendChild(body);
       commentList.appendChild(div);
     }
 
-    commentForm.addEventListener("submit", (e) => {
+    // 7) REAL-TIME LISTENER: LOAD & UPDATE COMMENTS FROM FIRESTORE
+    //    Orders comments from newest to oldest by 'date'
+    const commentsQuery = query(commentsCol, orderBy("date", "desc"));
+
+    onSnapshot(commentsQuery, (snapshot) => {
+      // Clear current list
+      commentList.innerHTML = "";
+      snapshot.forEach((doc) => {
+        addCommentToDOM(doc.data());
+      });
+    });
+
+    // 8) HANDLE NEW COMMENT SUBMISSION (save to Firestore)
+    commentForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const name = document.getElementById("nameInput").value.trim();
+      const name    = document.getElementById("nameInput").value.trim();
       const message = document.getElementById("messageInput").value.trim();
       if (!message) return;
 
-      const comment = {
-        name: name || "Anonymous",
-        message,
-        date: new Date().toISOString()
-      };
-
-      saveComment(comment);
-      commentList.innerHTML = "";
-      loadComments();
-      commentForm.reset();
+      try {
+        await addDoc(commentsCol, {
+          name: name || "Anonymous",
+          message,
+          date: serverTimestamp()
+        });
+        commentForm.reset();
+        // No need to manually reload list – onSnapshot updates automatically
+      } catch (err) {
+        console.error("Error adding comment:", err);
+        alert("Sorry, there was a problem saving your comment.");
+      }
     });
-
-    loadComments();
   </script>
-
 </body>
 </html>
+
