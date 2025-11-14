@@ -449,184 +449,162 @@
 
   <!-- GOOGLE DRIVE PHOTO CODE -->
   <script>
-    // TODO: replace these three values with your real Google credentials/IDs:
-    const CLIENT_ID = "220214661440-iqhbhncgbg34b6imeeha44pemj3pbf79.apps.googleusercontent.com";
-    const API_KEY   = "AIzaSyCn4WATS-73L4GlfdlEMP8XBNnz00Tw3-E";
-    const FOLDER_ID = "1Ep4A7YqTfClYusea7NamuR1FKO6aW7HK"; // everything after 'folders/' in the Drive URL
+  // 🔴 PUT YOUR REAL DRIVE VALUES HERE
+  const CLIENT_ID = "220214661440-iqhbhncgbg34b6imeeha44pemj3pbf79.apps.googleusercontent.com";
+  const API_KEY   = "AIzaSyCn4WATS-73L4GlfdlEMP8XBNnz00Tw3-E";
+  const FOLDER_ID = "1Ep4A7YqTfClYusea7NamuR1FKO6aW7HK"; // just the ID, not the whole URL
 
-    const DISCOVERY_DOC = "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest";
-    const SCOPES        = "https://www.googleapis.com/auth/drive.file";
+  const DISCOVERY_DOC = "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest";
+  const SCOPES        = "https://www.googleapis.com/auth/drive.file";
 
-    let tokenClient;
-    let gapiInited = false;
-    let gisInited  = false;
+  let tokenClient;
+  let gapiInited = false;
+  let gisInited  = false;
 
-    const authorizeButton = document.getElementById("driveAuthorize");
-    const signoutButton   = document.getElementById("driveSignout");
-    const uploadButton    = document.getElementById("driveUpload");
-    const photoInput      = document.getElementById("photoInput");
-    const photoGrid       = document.getElementById("photoGrid");
+  const addPhotosButton = document.getElementById("driveAddPhotos");
+  const signoutButton   = document.getElementById("driveSignout");
+  const photoInput      = document.getElementById("photoInput");
+  const photoHint       = document.getElementById("photoHint");
 
-    // Called when gapi script loads
-    function gapiLoaded() {
-      gapi.load("client", initializeGapiClient);
+  // Disable button until both libraries are ready
+  addPhotosButton.disabled = true;
+
+  function maybeEnableAddButton() {
+    if (gapiInited && gisInited) {
+      addPhotosButton.disabled = false;
     }
+  }
 
-    async function initializeGapiClient() {
+  // Called when gapi script loads
+  function gapiLoaded() {
+    gapi.load("client", async () => {
       await gapi.client.init({
         apiKey: API_KEY,
         discoveryDocs: [DISCOVERY_DOC],
       });
       gapiInited = true;
-      maybeEnableAuthorize();
-    }
+      maybeEnableAddButton();
+      // No need to list images here; iframe shows them
+    });
+  }
 
-    // Called when Google Identity script loads
-    function gisLoaded() {
-      tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        callback: "", // set later
-      });
-      gisInited = true;
-      maybeEnableAuthorize();
-    }
+  // Called when Google Identity script loads
+  function gisLoaded() {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: "", // we set this when requesting a token
+    });
+    gisInited = true;
+    maybeEnableAddButton();
+  }
 
-    function maybeEnableAuthorize() {
-      if (gapiInited && gisInited) {
-        authorizeButton.style.display = "inline-block";
-      }
-    }
+  // Main button: login if needed, then open file picker
+  addPhotosButton.addEventListener("click", () => {
+    const hasToken = !!gapi.client.getToken();
 
-    authorizeButton.onclick = () => {
+    const continueFlow = () => {
+      photoHint.textContent = "Choose photos to upload. They will appear in the Drive gallery above.";
+      signoutButton.style.display = "inline-block";
+      photoInput.click();
+    };
+
+    if (!hasToken) {
       tokenClient.callback = async (resp) => {
         if (resp.error !== undefined) {
           console.error(resp);
           return;
         }
-        authorizeButton.style.display = "none";
-        signoutButton.style.display   = "inline-block";
-        uploadButton.disabled         = false;
-        listDriveImages();
+        continueFlow();
       };
+      tokenClient.requestAccessToken({ prompt: "consent" });
+    } else {
+      continueFlow();
+    }
+  });
 
-      if (gapi.client.getToken() === null) {
-        tokenClient.requestAccessToken({ prompt: "consent" });
-      } else {
-        tokenClient.requestAccessToken({ prompt: "" });
-      }
-    };
+  // When files are chosen, upload them automatically
+  photoInput.addEventListener("change", async () => {
+    const files = Array.from(photoInput.files || []);
+    if (!files.length) return;
 
-    signoutButton.onclick = () => {
-      const token = gapi.client.getToken();
-      if (token !== null) {
-        google.accounts.oauth2.revoke(token.access_token);
-        gapi.client.setToken("");
-      }
-      authorizeButton.style.display = "inline-block";
-      signoutButton.style.display   = "none";
-      uploadButton.disabled         = true;
-      photoGrid.innerHTML           = "";
-    };
+    addPhotosButton.disabled = true;
+    addPhotosButton.textContent = "Uploading...";
 
-    uploadButton.onclick = async () => {
-      const files = Array.from(photoInput.files || []);
-      if (!files.length) return;
-
+    try {
       for (const file of files) {
         await uploadFileToDrive(file);
       }
-
+      alert("Upload complete! Refresh the page or the folder view to see new photos.");
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("There was a problem uploading one or more photos.");
+    } finally {
       photoInput.value = "";
-      listDriveImages();
+      addPhotosButton.disabled = false;
+      addPhotosButton.textContent = "Add photos (Google login required)";
+    }
+  });
+
+  // Optional: sign out button
+  signoutButton.addEventListener("click", () => {
+    const token = gapi.client.getToken();
+    if (token !== null) {
+      google.accounts.oauth2.revoke(token.access_token);
+      gapi.client.setToken("");
+    }
+    signoutButton.style.display = "none";
+    photoHint.textContent = "To add photos, click the button below. You’ll be asked to sign in with Google once.";
+  });
+
+  async function uploadFileToDrive(file) {
+    const boundary  = "-------314159265358979323846";
+    const delimiter = "\r\n--" + boundary + "\r\n";
+    const closeDelim = "\r\n--" + boundary + "--";
+
+    const metadata = {
+      name: file.name,
+      parents: [FOLDER_ID],
     };
 
-    async function uploadFileToDrive(file) {
-      const boundary  = "-------314159265358979323846";
-      const delimiter = "\r\n--" + boundary + "\r\n";
-      const closeDelim = "\r\n--" + boundary + "--";
+    const reader = new FileReader();
 
-      const metadata = {
-        name: file.name,
-        parents: [FOLDER_ID],
-      };
+    return new Promise((resolve, reject) => {
+      reader.onload = async (e) => {
+        const contentType = file.type || "application/octet-stream";
+        const base64Data = btoa(
+          new Uint8Array(e.target.result)
+            .reduce((data, byte) => data + String.fromCharCode(byte), "")
+        );
 
-      const reader = new FileReader();
+        const multipartRequestBody =
+          delimiter +
+          "Content-Type: application/json\r\n\r\n" +
+          JSON.stringify(metadata) +
+          delimiter +
+          "Content-Type: " + contentType + "\r\n" +
+          "Content-Transfer-Encoding: base64\r\n\r\n" +
+          base64Data +
+          closeDelim;
 
-      return new Promise((resolve, reject) => {
-        reader.onload = async (e) => {
-          const contentType = file.type || "application/octet-stream";
-          const base64Data = btoa(
-            new Uint8Array(e.target.result)
-              .reduce((data, byte) => data + String.fromCharCode(byte), "")
-          );
-
-          const multipartRequestBody =
-            delimiter +
-            "Content-Type: application/json\r\n\r\n" +
-            JSON.stringify(metadata) +
-            delimiter +
-            "Content-Type: " + contentType + "\r\n" +
-            "Content-Transfer-Encoding: base64\r\n\r\n" +
-            base64Data +
-            closeDelim;
-
-          try {
-            const response = await gapi.client.request({
-              path: "/upload/drive/v3/files",
-              method: "POST",
-              params: { uploadType: "multipart" },
-              headers: { "Content-Type": "multipart/related; boundary=" + boundary },
-              body: multipartRequestBody,
-            });
-            resolve(response.result);
-          } catch (err) {
-            console.error("Upload error:", err);
-            alert("There was a problem uploading " + file.name);
-            reject(err);
-          }
-        };
-        reader.onerror = reject;
-        reader.readAsArrayBuffer(file);
-      });
-    }
-
-    async function listDriveImages() {
-      photoGrid.innerHTML = "";
-      try {
-        const res = await gapi.client.drive.files.list({
-          q: `'${FOLDER_ID}' in parents and trashed = false`,
-          fields: "files(id, name, mimeType, thumbnailLink)",
-          orderBy: "createdTime desc",
-        });
-
-        (res.result.files || [])
-          .filter(f => f.mimeType && f.mimeType.startsWith("image/"))
-          .forEach(file => {
-            const card = document.createElement("div");
-            card.className = "media-card";
-
-            const img = document.createElement("img");
-            if (file.thumbnailLink) {
-              img.src = file.thumbnailLink;
-            } else {
-              img.src = `https://drive.google.com/uc?export=view&id=${file.id}`;
-            }
-            img.alt = file.name;
-
-            const caption = document.createElement("span");
-            caption.textContent = file.name;
-
-            card.appendChild(img);
-            card.appendChild(caption);
-            photoGrid.appendChild(card);
+        try {
+          const response = await gapi.client.request({
+            path: "/upload/drive/v3/files",
+            method: "POST",
+            params: { uploadType: "multipart" },
+            headers: { "Content-Type": "multipart/related; boundary=" + boundary },
+            body: multipartRequestBody,
           });
-
-      } catch (err) {
-        console.error("Error listing Drive images:", err);
-      }
-    }
-  </script>
+          resolve(response.result);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
+    });
+  }
+</script>
 
   <!-- Google Identity + GAPI scripts -->
   <script src="https://accounts.google.com/gsi/client" async defer onload="gisLoaded()"></script>
