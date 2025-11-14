@@ -303,24 +303,22 @@
     &copy; <span id="year"></span> Our Family. All hugs reserved.
   </footer>
 
-  <!-- BASIC YEAR + COMMENTS SCRIPT (localStorage) -->
-  <!-- Firebase + Comments script -->
-  <script type="module">
-    // 1) IMPORT FIREBASE (from CDN)
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js';
-    import {
-      getFirestore,
-      collection,
-      addDoc,
-      serverTimestamp,
-      query,
-      orderBy,
-      onSnapshot
-    } from 'https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js';
+  <!-- YEAR + COMMENTS VIA FIREBASE -->
+<script type="module">
+  // 1) IMPORT FIREBASE FROM CDN
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    addDoc,
+    serverTimestamp,
+    query,
+    orderBy,
+    onSnapshot
+  } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
-    // 2) YOUR FIREBASE CONFIG (copy from Firebase console)
-    //    Replace the object below with the one Firebase showed you.
-    const firebaseConfig = {
+  // 2) YOUR FIREBASE CONFIG (replace with your actual config)
+  const firebaseConfig = {
   apiKey: "AIzaSyBStzjcV-tl1kBLAUBmpucelKfQ54cSWYc",
   authDomain: "family-site-final.firebaseapp.com",
   projectId: "family-site-final",
@@ -330,93 +328,75 @@
 };
 
 
-    // 3) INITIALIZE FIREBASE + FIRESTORE
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const commentsCol = collection(db, "comments"); // collection name in Firestore
+  // 3) INITIALIZE FIREBASE + FIRESTORE
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const commentsCol = collection(db, "comments"); // Firestore collection name
 
-    // 4) EXISTING DOM HOOKS
-    document.getElementById("year").textContent = new Date().getFullYear();
+  // 4) BASIC DOM HOOKS
+  const yearSpan    = document.getElementById("year");
+  const commentForm = document.getElementById("commentForm");
+  const commentList = document.getElementById("commentList");
 
-    const photoInput = document.getElementById("photoInput");
-    const photoGrid  = document.getElementById("photoGrid");
+  if (yearSpan) {
+    yearSpan.textContent = new Date().getFullYear();
+  }
 
-    const commentForm  = document.getElementById("commentForm");
-    const commentList  = document.getElementById("commentList");
+  // 5) RENDER A SINGLE COMMENT INTO THE DOM
+  function addCommentToDOM(data) {
+    if (!commentList) return;
 
-    // 5) PHOTO PREVIEW (same behavior as before)
-    if (photoInput) {
-      photoInput.addEventListener("change", (event) => {
-        const files = Array.from(event.target.files);
-        files.forEach((file) => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const card = document.createElement("div");
-            card.className = "media-card";
-            const img = document.createElement("img");
-            img.src = e.target.result;
-            img.alt = file.name;
-            const caption = document.createElement("span");
-            caption.textContent = file.name;
-            card.appendChild(img);
-            card.appendChild(caption);
-            photoGrid.prepend(card);
-          };
-          reader.readAsDataURL(file);
-        });
-        photoInput.value = "";
-      });
+    const div = document.createElement("div");
+    div.className = "comment";
+
+    const header = document.createElement("div");
+    header.className = "comment-header";
+
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = data.name || "Anonymous";
+
+    const dateSpan = document.createElement("span");
+    dateSpan.className = "comment-date";
+    if (data.date && data.date.toDate) {
+      dateSpan.textContent = data.date.toDate().toLocaleString();
+    } else {
+      dateSpan.textContent = "";
     }
 
-    // 6) RENDER A SINGLE COMMENT INTO THE DOM
-    function addCommentToDOM(data) {
-      const div = document.createElement("div");
-      div.className = "comment";
+    header.appendChild(nameSpan);
+    header.appendChild(dateSpan);
 
-      const header = document.createElement("div");
-      header.className = "comment-header";
+    const body = document.createElement("div");
+    body.textContent = data.message;
 
-      const nameSpan = document.createElement("span");
-      nameSpan.textContent = data.name || "Anonymous";
+    div.appendChild(header);
+    div.appendChild(body);
+    commentList.appendChild(div);
+  }
 
-      const dateSpan = document.createElement("span");
-      dateSpan.className = "comment-date";
-
-      // If Firestore timestamp exists, show it; else blank
-      if (data.date && data.date.toDate) {
-        dateSpan.textContent = data.date.toDate().toLocaleString();
-      } else {
-        dateSpan.textContent = "";
-      }
-
-      header.appendChild(nameSpan);
-      header.appendChild(dateSpan);
-
-      const body = document.createElement("div");
-      body.textContent = data.message;
-
-      div.appendChild(header);
-      div.appendChild(body);
-      commentList.appendChild(div);
-    }
-
-    // 7) REAL-TIME LISTENER: LOAD & UPDATE COMMENTS FROM FIRESTORE
-    //    Orders comments from newest to oldest by 'date'
+  // 6) REAL-TIME LISTENER: LOAD COMMENTS FROM FIRESTORE (NEWEST FIRST)
+  if (commentList) {
     const commentsQuery = query(commentsCol, orderBy("date", "desc"));
 
     onSnapshot(commentsQuery, (snapshot) => {
-      // Clear current list
       commentList.innerHTML = "";
       snapshot.forEach((doc) => {
         addCommentToDOM(doc.data());
       });
     });
+  }
 
-    // 8) HANDLE NEW COMMENT SUBMISSION (save to Firestore)
+  // 7) HANDLE NEW COMMENT SUBMISSION (SAVE TO FIRESTORE)
+  if (commentForm) {
     commentForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const name    = document.getElementById("nameInput").value.trim();
-      const message = document.getElementById("messageInput").value.trim();
+
+      const nameInput    = document.getElementById("nameInput");
+      const messageInput = document.getElementById("messageInput");
+
+      const name    = (nameInput.value || "").trim();
+      const message = (messageInput.value || "").trim();
+
       if (!message) return;
 
       try {
@@ -425,14 +405,17 @@
           message,
           date: serverTimestamp()
         });
+
         commentForm.reset();
-        // No need to manually reload list – onSnapshot updates automatically
+        // No need to manually reload; onSnapshot will update the list
       } catch (err) {
         console.error("Error adding comment:", err);
         alert("Sorry, there was a problem saving your comment.");
       }
     });
-  </script>
+  }
+</script>
+
   <!-- GOOGLE DRIVE PHOTO CODE -->
   <script>
     // TODO: replace these three values with your real Google credentials/IDs:
