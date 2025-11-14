@@ -184,33 +184,37 @@
     }
 
     async function listDriveImages() {
-      photoGrid.innerHTML = "";
-      try {
-        const res = await gapi.client.drive.files.list({
-          q: `'${FOLDER_ID}' in parents and trashed = false`,
-          fields: "files(id, name, mimeType)",
-          orderBy: "createdTime desc",
-        });
+  photoGrid.innerHTML = "";
+  try {
+    const res = await gapi.client.drive.files.list({
+      q: `'${FOLDER_ID}' in parents and trashed = false`,
+      fields: "files(id, name, mimeType)",
+      orderBy: "createdTime desc",
+    });
 
-        (res.result.files || [])
-          .filter(f => f.mimeType.startsWith("image/"))
-          .forEach(file => {
-            const card = document.createElement("div");
-            card.className = "media-card";
-            const img = document.createElement("img");
-            img.src = `https://drive.google.com/uc?export=download&id=${file.id}`;
-            img.alt = file.name;
-            const caption = document.createElement("span");
-            caption.textContent = file.name;
-            card.appendChild(img);
-            card.appendChild(caption);
-            photoGrid.appendChild(card);
-          });
+    (res.result.files || [])
+      .filter(f => f.mimeType && f.mimeType.startsWith("image/"))
+      .forEach(file => {
+        const card = document.createElement("div");
+        card.className = "media-card";
 
-      } catch (err) {
-        console.error("List error", err);
-      }
-    }
+        const img = document.createElement("img");
+        img.src = `https://drive.google.com/uc?export=view&id=${file.id}`;
+        img.alt = file.name;
+
+        const caption = document.createElement("span");
+        caption.textContent = file.name;
+
+        card.appendChild(img);
+        card.appendChild(caption);
+        photoGrid.appendChild(card);
+      });
+
+  } catch (err) {
+    console.error("Error listing Drive images:", err);
+  }
+}
+
   </script>
 
   <script src="https://accounts.google.com/gsi/client" async defer onload="gisLoaded()"></script>
