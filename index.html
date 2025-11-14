@@ -188,7 +188,7 @@
   try {
     const res = await gapi.client.drive.files.list({
       q: `'${FOLDER_ID}' in parents and trashed = false`,
-      fields: "files(id, name, mimeType)",
+      fields: "files(id, name, mimeType, thumbnailLink)",
       orderBy: "createdTime desc",
     });
 
@@ -199,7 +199,15 @@
         card.className = "media-card";
 
         const img = document.createElement("img");
-        img.src = `https://drive.google.com/uc?export=view&id=${file.id}`;
+
+        // Prefer Drive's thumbnail URL, fall back to uc?export=view
+        if (file.thumbnailLink) {
+          // thumbnailLink may have &sz=w... query already – just use as is
+          img.src = file.thumbnailLink;
+        } else {
+          img.src = `https://drive.google.com/uc?export=view&id=${file.id}`;
+        }
+
         img.alt = file.name;
 
         const caption = document.createElement("span");
@@ -214,6 +222,7 @@
     console.error("Error listing Drive images:", err);
   }
 }
+
 
   </script>
 
