@@ -1,165 +1,516 @@
-<!-- Revised index.html with Google Drive API integration for shared photos -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Family Website</title>
+  <title>Family Memories</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
-    header { background: #333; color: #fff; padding: 1rem; text-align: center; }
-    nav { background: #444; padding: 0.5rem; display: flex; gap: 1rem; justify-content: center; }
-    nav a { color: #fff; text-decoration: none; padding: 0.5rem 1rem; background: #666; border-radius: 6px; }
-    nav a:hover { background: #888; }
-    section { padding: 1.5rem; }
-    h2 { margin-top: 0; }
-    .media-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
-    .media-card { background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .media-card img, .media-card iframe { width: 100%; border-radius: 6px; }
-    .btn { padding: 0.6rem 1rem; background: #333; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .comment { background: #fff; padding: 0.7rem; margin-bottom: 0.6rem; border-radius: 6px; }
-    footer { text-align: center; padding: 1rem; background: #333; color: #fff; margin-top: 2rem; }
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #f4f4f7;
+      color: #222;
+    }
+
+    header {
+      position: relative;
+      text-align: center;
+      color: #fff;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .banner-image {
+      width: 100%;
+      max-height: 360px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .banner-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.6));
+    }
+
+    .banner-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .banner-text h1 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.3em;
+    }
+
+    .banner-text p {
+      font-size: 1rem;
+      opacity: 0.95;
+    }
+
+    nav {
+      background: #ffffff;
+      border-bottom: 1px solid #e4e4e8;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      padding: 0.75rem 1rem;
+      flex-wrap: wrap;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #444;
+      font-weight: 600;
+      padding: 0.35rem 0.8rem;
+      border-radius: 999px;
+      transition: background 0.2s, color 0.2s, transform 0.1s;
+    }
+
+    nav a:hover {
+      background: #406aff18;
+      color: #2d4f9f;
+      transform: translateY(-1px);
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 1.5rem auto 3rem;
+      padding: 0 1rem;
+    }
+
+    section {
+      background: #ffffff;
+      margin-bottom: 1.5rem;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+    }
+
+    section h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    section p.section-intro {
+      margin-bottom: 1rem;
+      color: #555;
+    }
+
+    .media-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .media-card {
+      background: #f9fafb;
+      border-radius: 0.9rem;
+      padding: 0.6rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .media-card img,
+    .media-card video {
+      width: 100%;
+      border-radius: 0.7rem;
+      display: block;
+    }
+
+    .media-card iframe {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 0.7rem;
+    }
+
+    .media-card span {
+      font-size: 0.85rem;
+      color: #555;
+    }
+
+    .upload-hint {
+      font-size: 0.85rem;
+      color: #777;
+      margin-top: 0.75rem;
+    }
+
+    .file-input {
+      margin-top: 0.5rem;
+    }
+
+    .comment-form {
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .comment-form input,
+    .comment-form textarea {
+      width: 100%;
+      padding: 0.6rem 0.7rem;
+      border-radius: 0.6rem;
+      border: 1px solid #d0d4dd;
+      font: inherit;
+    }
+
+    .comment-form textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .btn {
+      align-self: flex-start;
+      padding: 0.5rem 1.2rem;
+      border-radius: 999px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      background: #315fe4;
+      color: #fff;
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
+      transition: transform 0.08s, box-shadow 0.08s, opacity 0.2s;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #777;
+      padding-bottom: 2rem;
+    }
+
+    @media (max-width: 600px) {
+      section {
+        border-radius: 0.75rem;
+        padding: 1.2rem;
+      }
+    }
   </style>
 </head>
+
 <body>
   <header>
-    <h1>Our Family Website</h1>
+    <!-- Make sure banner.jpg is in the same folder as index.html -->
+    <img src="banner.jpg" alt="Family Memories Banner" class="banner-image" />
+    <div class="banner-overlay"></div>
+    <div class="banner-text">
+      <h1>Family Memories</h1>
+      <p>Our “Hugga Hoops” Adventures &amp; More</p>
+    </div>
   </header>
 
   <nav>
-    <a href="#photos">Photos</a>
-    <a href="#videos">Videos</a>
-    <a href="#comments">Comments</a>
+    <ul>
+      <li><a href="#about">Home</a></li>
+      <li><a href="#photos">Photos</a></li>
+      <li><a href="#videos">Videos</a></li>
+      <li><a href="#comments">Guestbook</a></li>
+    </ul>
   </nav>
 
-  <!-- PHOTOS SECTION (Google Drive integrated) -->
-  <section id="photos">
-    <h2>Family Photo Gallery</h2>
-    <p>Photos below load from our shared Google Drive folder.</p>
+  <main>
+    <section id="about">
+      <h2>Welcome, Family &amp; Friends!</h2>
+      <p class="section-intro">
+        This little site is our spot for collecting stories, photos, and videos from all of our
+        “Hugga Hoops” adventures and family gatherings. Add your memories and say hi in the guestbook below.
+      </p>
+    </section>
 
-    <div style="margin-top:1rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
-      <button id="driveAuthorize" class="btn">Sign in with Google</button>
-      <button id="driveSignout" class="btn" style="display:none;">Sign out</button>
-    </div>
+    <!-- PHOTOS (Google Drive-powered gallery) -->
+    <section id="photos">
+      <h2>Photo Gallery</h2>
+      <p class="section-intro">
+        Photos in this gallery are stored in our shared Google Drive folder.
+      </p>
 
-    <input type="file" id="photoInput" accept="image/*" multiple style="margin-top:1rem;" />
-    <button id="driveUpload" class="btn" disabled>Upload Selected Images</button>
+      <div class="media-grid" id="photoGrid">
+        <!-- Drive-loaded images will appear here -->
+      </div>
 
-    <h3 style="margin-top:2rem;">Shared Photos</h3>
-    <div class="media-grid" id="photoGrid"></div>
-  </section>
+      <p class="upload-hint">
+        Sign in with Google, choose photos, and upload them to the shared Drive folder. They will appear above.
+      </p>
 
-  <!-- VIDEOS SECTION -->
-  <section id="videos">
-    <h2>Family Videos</h2>
-    <div class="media-card">
-      <iframe src="https://www.youtube.com/embed/videoseries?list=PLF0dSSzU0Xsg-JhzeJfeTHygpNXBfZf79" allowfullscreen></iframe>
-      <span>Family Playlist</span>
-    </div>
-  </section>
+      <div style="margin-top:0.5rem; display:flex; flex-wrap:wrap; gap:0.5rem;">
+        <button id="driveAuthorize" class="btn">Sign in with Google</button>
+        <button id="driveSignout" class="btn" style="display:none;">Sign out</button>
+      </div>
 
-  <!-- COMMENTS SECTION -->
-  <section id="comments">
-    <h2>Comments</h2>
-    <form id="commentForm">
-      <input type="text" id="nameInput" placeholder="Your name" style="width:100%; padding:0.5rem; margin-bottom:0.5rem;" />
-      <textarea id="messageInput" placeholder="Write a message..." style="width:100%; height:80px; padding:0.5rem;"></textarea>
-      <button class="btn" type="submit" style="margin-top:0.5rem;">Post Comment</button>
-    </form>
+      <input class="file-input" type="file" accept="image/*" multiple id="photoInput" />
+      <button id="driveUpload" class="btn" disabled style="margin-top:0.5rem;">
+        Upload selected images to Drive
+      </button>
+    </section>
 
-    <div id="commentList" style="margin-top:1rem;"></div>
-  </section>
+    <!-- VIDEOS (YouTube playlist + optional MP4) -->
+    <section id="videos">
+      <h2>Video Gallery</h2>
+      <p class="section-intro">
+        Watch our Hugga Hoops and family videos. The playlist updates automatically as we add new videos.
+      </p>
 
-  <footer>&copy; <span id="year"></span> Our Family</footer>
+      <div class="media-grid" id="videoGrid">
+        <!-- YouTube Playlist Card -->
+        <div class="media-card">
+          <iframe
+            src="https://www.youtube.com/embed/videoseries?list=PLF0dSSzU0Xsg-JhzeJfeTHygpNXBfZf79"
+            allowfullscreen>
+          </iframe>
+          <span>Our Family YouTube Playlist</span>
+        </div>
+
+        <!-- Optional local MP4 example; remove or replace src if you want -->
+        <div class="media-card">
+          <video controls>
+            <source src="hugga_hoops_game.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <span>Hugga Hoops in the driveway</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMMENTS (localStorage guestbook) -->
+    <section id="comments">
+      <h2>Guestbook &amp; Comments</h2>
+      <p class="section-intro">
+        Leave a note, a memory, or a shout-out for the family.
+      </p>
+
+      <form class="comment-form" id="commentForm">
+        <input type="text" id="nameInput" placeholder="Your name" required />
+        <textarea id="messageInput" placeholder="Your message" required></textarea>
+        <button type="submit" class="btn">Post Comment</button>
+      </form>
+
+      <div class="comment-list" id="commentList"></div>
+      <p class="upload-hint">
+        Comments are stored in this browser only (using localStorage). To share across devices, you’ll
+        need a small server later.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    &copy; <span id="year"></span> Our Family. All hugs reserved.
+  </footer>
+
+  <!-- BASIC YEAR + COMMENTS SCRIPT (localStorage) -->
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    const commentForm = document.getElementById("commentForm");
+    const commentList = document.getElementById("commentList");
+    const STORAGE_KEY = "familySiteComments";
+
+    function loadComments() {
+      const data = localStorage.getItem(STORAGE_KEY);
+      const comments = data ? JSON.parse(data) : [];
+      commentList.innerHTML = "";
+      comments.forEach(addCommentToDOM);
+    }
+
+    function saveComment(comment) {
+      const data = localStorage.getItem(STORAGE_KEY);
+      const comments = data ? JSON.parse(data) : [];
+      comments.unshift(comment);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
+    }
+
+    function addCommentToDOM(comment) {
+      const div = document.createElement("div");
+      div.className = "comment";
+
+      const header = document.createElement("div");
+      header.className = "comment-header";
+
+      const nameSpan = document.createElement("span");
+      nameSpan.textContent = comment.name || "Anonymous";
+
+      const dateSpan = document.createElement("span");
+      dateSpan.className = "comment-date";
+      dateSpan.textContent = new Date(comment.date).toLocaleString();
+
+      header.appendChild(nameSpan);
+      header.appendChild(dateSpan);
+
+      const body = document.createElement("div");
+      body.textContent = comment.message;
+
+      div.appendChild(header);
+      div.appendChild(body);
+      commentList.appendChild(div);
+    }
+
+    commentForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = document.getElementById("nameInput").value.trim();
+      const message = document.getElementById("messageInput").value.trim();
+      if (!message) return;
+
+      const comment = {
+        name: name || "Anonymous",
+        message,
+        date: new Date().toISOString()
+      };
+
+      saveComment(comment);
+      commentList.innerHTML = "";
+      loadComments();
+      commentForm.reset();
+    });
+
+    loadComments();
+  </script>
 
   <!-- GOOGLE DRIVE PHOTO CODE -->
   <script>
-    const CLIENT_ID = "220214661440-iqhbhncgbg34b6imeeha44pemj3pbf79.apps.googleusercontent.com";
-    const API_KEY = "AIzaSyCn4WATS-73L4GlfdlEMP8XBNnz00Tw3-E";
-    const FOLDER_ID = "1Ep4A7YqTfClYusea7NamuR1FKO6aW7HK";
+    // TODO: replace these three values with your real Google credentials/IDs:
+    const CLIENT_ID = "YOUR_CLIENT_ID_HERE.apps.googleusercontent.com";
+    const API_KEY   = "YOUR_API_KEY_HERE";
+    const FOLDER_ID = "YOUR_FOLDER_ID_HERE"; // everything after 'folders/' in the Drive URL
 
     const DISCOVERY_DOC = "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest";
-    const SCOPES = "https://www.googleapis.com/auth/drive.file";
+    const SCOPES        = "https://www.googleapis.com/auth/drive.file";
 
     let tokenClient;
     let gapiInited = false;
-    let gisInited = false;
+    let gisInited  = false;
 
     const authorizeButton = document.getElementById("driveAuthorize");
-    const signoutButton = document.getElementById("driveSignout");
-    const uploadButton = document.getElementById("driveUpload");
-    const photoInput = document.getElementById("photoInput");
-    const photoGrid = document.getElementById("photoGrid");
+    const signoutButton   = document.getElementById("driveSignout");
+    const uploadButton    = document.getElementById("driveUpload");
+    const photoInput      = document.getElementById("photoInput");
+    const photoGrid       = document.getElementById("photoGrid");
 
-    document.getElementById("year").textContent = new Date().getFullYear();
-
-    function gapiLoaded() { gapi.load("client", initializeGapiClient); }
+    // Called when gapi script loads
+    function gapiLoaded() {
+      gapi.load("client", initializeGapiClient);
+    }
 
     async function initializeGapiClient() {
-      await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
+      await gapi.client.init({
+        apiKey: API_KEY,
+        discoveryDocs: [DISCOVERY_DOC],
+      });
       gapiInited = true;
       maybeEnableAuthorize();
     }
 
+    // Called when Google Identity script loads
     function gisLoaded() {
       tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope: SCOPES,
-        callback: "",
+        callback: "", // set later
       });
       gisInited = true;
       maybeEnableAuthorize();
     }
 
     function maybeEnableAuthorize() {
-      if (gapiInited && gisInited) authorizeButton.style.display = "inline-block";
+      if (gapiInited && gisInited) {
+        authorizeButton.style.display = "inline-block";
+      }
     }
 
     authorizeButton.onclick = () => {
       tokenClient.callback = async (resp) => {
-        if (resp.error) return;
+        if (resp.error !== undefined) {
+          console.error(resp);
+          return;
+        }
         authorizeButton.style.display = "none";
-        signoutButton.style.display = "inline-block";
-        uploadButton.disabled = false;
+        signoutButton.style.display   = "inline-block";
+        uploadButton.disabled         = false;
         listDriveImages();
       };
 
-      if (gapi.client.getToken() === null) tokenClient.requestAccessToken({ prompt: "consent" });
-      else tokenClient.requestAccessToken({ prompt: "" });
+      if (gapi.client.getToken() === null) {
+        tokenClient.requestAccessToken({ prompt: "consent" });
+      } else {
+        tokenClient.requestAccessToken({ prompt: "" });
+      }
     };
 
     signoutButton.onclick = () => {
       const token = gapi.client.getToken();
-      if (token) google.accounts.oauth2.revoke(token.access_token);
-      gapi.client.setToken("");
+      if (token !== null) {
+        google.accounts.oauth2.revoke(token.access_token);
+        gapi.client.setToken("");
+      }
       authorizeButton.style.display = "inline-block";
-      signoutButton.style.display = "none";
-      uploadButton.disabled = true;
-      photoGrid.innerHTML = "";
+      signoutButton.style.display   = "none";
+      uploadButton.disabled         = true;
+      photoGrid.innerHTML           = "";
     };
 
     uploadButton.onclick = async () => {
       const files = Array.from(photoInput.files || []);
-      for (const file of files) await uploadFileToDrive(file);
+      if (!files.length) return;
+
+      for (const file of files) {
+        await uploadFileToDrive(file);
+      }
+
       photoInput.value = "";
       listDriveImages();
     };
 
     async function uploadFileToDrive(file) {
-      const boundary = "-------314159265358979323846";
+      const boundary  = "-------314159265358979323846";
       const delimiter = "\r\n--" + boundary + "\r\n";
       const closeDelim = "\r\n--" + boundary + "--";
 
-      const metadata = { name: file.name, parents: [FOLDER_ID] };
+      const metadata = {
+        name: file.name,
+        parents: [FOLDER_ID],
+      };
+
       const reader = new FileReader();
 
       return new Promise((resolve, reject) => {
         reader.onload = async (e) => {
-          const contentType = file.type;
-          const base64Data = btoa(String.fromCharCode(...new Uint8Array(e.target.result)));
+          const contentType = file.type || "application/octet-stream";
+          const base64Data = btoa(
+            new Uint8Array(e.target.result)
+              .reduce((data, byte) => data + String.fromCharCode(byte), "")
+          );
 
-          const body =
+          const multipartRequestBody =
             delimiter +
             "Content-Type: application/json\r\n\r\n" +
             JSON.stringify(metadata) +
@@ -169,65 +520,65 @@
             base64Data +
             closeDelim;
 
-          const response = await gapi.client.request({
-            path: "/upload/drive/v3/files",
-            method: "POST",
-            params: { uploadType: "multipart" },
-            headers: { "Content-Type": "multipart/related; boundary=" + boundary },
-            body,
-          });
-
-          resolve(response.result);
+          try {
+            const response = await gapi.client.request({
+              path: "/upload/drive/v3/files",
+              method: "POST",
+              params: { uploadType: "multipart" },
+              headers: { "Content-Type": "multipart/related; boundary=" + boundary },
+              body: multipartRequestBody,
+            });
+            resolve(response.result);
+          } catch (err) {
+            console.error("Upload error:", err);
+            alert("There was a problem uploading " + file.name);
+            reject(err);
+          }
         };
+        reader.onerror = reject;
         reader.readAsArrayBuffer(file);
       });
     }
 
     async function listDriveImages() {
-  photoGrid.innerHTML = "";
-  try {
-    const res = await gapi.client.drive.files.list({
-      q: `'${FOLDER_ID}' in parents and trashed = false`,
-      fields: "files(id, name, mimeType, thumbnailLink)",
-      orderBy: "createdTime desc",
-    });
+      photoGrid.innerHTML = "";
+      try {
+        const res = await gapi.client.drive.files.list({
+          q: `'${FOLDER_ID}' in parents and trashed = false`,
+          fields: "files(id, name, mimeType, thumbnailLink)",
+          orderBy: "createdTime desc",
+        });
 
-    (res.result.files || [])
-      .filter(f => f.mimeType && f.mimeType.startsWith("image/"))
-      .forEach(file => {
-        const card = document.createElement("div");
-        card.className = "media-card";
+        (res.result.files || [])
+          .filter(f => f.mimeType && f.mimeType.startsWith("image/"))
+          .forEach(file => {
+            const card = document.createElement("div");
+            card.className = "media-card";
 
-        const img = document.createElement("img");
+            const img = document.createElement("img");
+            if (file.thumbnailLink) {
+              img.src = file.thumbnailLink;
+            } else {
+              img.src = `https://drive.google.com/uc?export=view&id=${file.id}`;
+            }
+            img.alt = file.name;
 
-        // Prefer Drive's thumbnail URL, fall back to uc?export=view
-        if (file.thumbnailLink) {
-          // thumbnailLink may have &sz=w... query already – just use as is
-          img.src = file.thumbnailLink;
-        } else {
-          img.src = `https://drive.google.com/uc?export=view&id=${file.id}`;
-        }
+            const caption = document.createElement("span");
+            caption.textContent = file.name;
 
-        img.alt = file.name;
+            card.appendChild(img);
+            card.appendChild(caption);
+            photoGrid.appendChild(card);
+          });
 
-        const caption = document.createElement("span");
-        caption.textContent = file.name;
-
-        card.appendChild(img);
-        card.appendChild(caption);
-        photoGrid.appendChild(card);
-      });
-
-  } catch (err) {
-    console.error("Error listing Drive images:", err);
-  }
-}
-
-
+      } catch (err) {
+        console.error("Error listing Drive images:", err);
+      }
+    }
   </script>
 
+  <!-- Google Identity + GAPI scripts -->
   <script src="https://accounts.google.com/gsi/client" async defer onload="gisLoaded()"></script>
   <script src="https://apis.google.com/js/api.js" async defer onload="gapiLoaded()"></script>
-
 </body>
 </html>
