@@ -1,489 +1,327 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Family Memories</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.5;
+<script>
+  // ====== GOOGLE DRIVE SETTINGS ======
+  const CLIENT_ID = "220214661440-iqhbhncgbg34b6imeeha44pemj3pbf79.apps.googleusercontent.com";
+  const API_KEY = "AIzaSyBoHLyl_H6q4XRo6si-vdy1CnfNHOsVLD8";
+
+  // Folder IDs
+  const PHOTO_FOLDER_ID = "1Ep4A7YqTfClYusea7NamuR1FKO6aW7HK";
+  const DOC_FOLDER_ID   = "1feFodHcNSZa38XUx9lbt08HM2rjq2HsH";
+
+  const DISCOVERY_DOC = "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest";
+
+  // For uploading: drive.file lets your app create/manage its own files.
+  // Note: listing may require user access unless folders/files are shared publicly.
+  const SCOPES = "https://www.googleapis.com/auth/drive.file";
+
+  let tokenClient;
+  let gapiInited = false;
+  let gisInited = false;
+
+  // ====== DOM ELEMENTS ======
+  const addPhotosButton = document.getElementById("driveAddPhotos");
+  const signoutButton = document.getElementById("driveSignout");
+  const photoInput = document.getElementById("photoInput");
+  const photoHint = document.getElementById("photoHint");
+
+  const photoGrid = document.getElementById("photoGrid");
+  const photoStatus = document.getElementById("photoStatus");
+
+  const docGrid = document.getElementById("docGrid");
+  const docStatus = document.getElementById("docStatus");
+
+  // Disable button until both libraries are ready (if button exists)
+  if (addPhotosButton) addPhotosButton.disabled = true;
+
+  function maybeEnableAddButton() {
+    if (addPhotosButton && gapiInited && gisInited) {
+      addPhotosButton.disabled = false;
     }
+  }
 
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-.banner-container {
-  max-width: 900px;   /* <— adjust smaller or larger */
-  margin: 0 auto;     /* <— centers the banner */
-  position: relative;
-}
-
-.banner-image {
-  width: 100%;        /* fits the max-width */
-  height: auto;
-  border-radius: 10px;  /* optional */
-}
-
-
-    body {
-      background: #f4f4f7;
-      color: #222;
-    }
-
-    header {
-      position: relative;
-      text-align: center;
-      color: #fff;
-      padding: 0;
-      overflow: hidden;
-    }
-
-    .banner-image {
-      width: 90%;
-      max-height: 660px;
-      object-fit: cover;
-      display: block;
-    }
-
-    .banner-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.6));
-    }
-
-    .banner-text {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-    }
-
-    .banner-text h1 {460
-      font-size: clamp(2rem, 4vw, 3rem);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 0.3em;
-    }
-
-    .banner-text p {
-      font-size: 1rem;
-      opacity: 0.95;
-    }
-
-    nav {
-      background: #ffffff;
-      border-bottom: 1px solid #e4e4e8;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-
-    nav ul {
-      list-style: none;
-      display: flex;
-      justify-content: center;
-      gap: 1.5rem;
-      padding: 0.75rem 1rem;
-      flex-wrap: wrap;
-    }
-
-    nav a {
-      text-decoration: none;
-      color: #444;
-      font-weight: 600;
-      padding: 0.35rem 0.8rem;
-      border-radius: 999px;
-      transition: background 0.2s, color 0.2s, transform 0.1s;
-    }
-
-    nav a:hover {
-      background: #406aff18;
-      color: #2d4f9f;
-      transform: translateY(-1px);
-    }
-
-    main {
-      max-width: 1100px;
-      margin: 1.5rem auto 3rem;
-      padding: 0 1rem;
-    }
-
-    section {
-      background: #ffffff;
-      margin-bottom: 1.5rem;
-      padding: 1.5rem;
-      border-radius: 1rem;
-      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
-    }
-
-    section h2 {
-      font-size: 1.5rem;
-      margin-bottom: 0.75rem;
-    }
-
-    section p.section-intro {
-      margin-bottom: 1rem;
-      color: #555;
-    }
-
-    /* Galleries */
-
-    .media-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1rem;
-      margin-top: 0.5rem;
-    }
-
-    .media-card {
-      background: #f9fafb;
-      border-radius: 0.9rem;
-      padding: 0.6rem;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-    }
-
-    .media-card img,
-    .media-card video {
-      width: 100%;
-      border-radius: 0.7rem;
-      display: block;
-    }
-
-    .media-card span {
-      font-size: 0.85rem;
-      color: #555;
-    }
-
-    .upload-hint {
-      font-size: 0.85rem;
-      color: #777;
-      margin-top: 0.75rem;
-    }
-
-    .file-input {
-      margin-top: 0.5rem;
-    }
-
-    /* Comments / guestbook */
-
-    .comment-form {
-      margin-top: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-    }
-
-    .comment-form input,
-    .comment-form textarea {
-      width: 100%;
-      padding: 0.6rem 0.7rem;
-      border-radius: 0.6rem;
-      border: 1px solid #d0d4dd;
-      font: inherit;
-    }
-
-    .comment-form textarea {
-      min-height: 80px;
-      resize: vertical;
-    }
-
-    .btn {
-      align-self: flex-start;
-      padding: 0.5rem 1.2rem;
-      border-radius: 999px;
-      border: none;
-      font-weight: 600;
-      cursor: pointer;
-      background: #315fe4;
-      color: #fff;
-      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
-      transition: transform 0.08s, box-shadow 0.08s, opacity 0.2s;
-    }
-
-    .btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 9px 20px rgba(37, 99, 235, 0.3);
-      opacity: 0.95;
-    }
-
-    .btn:active {
-      transform: translateY(1px);
-      box-shadow: 0 3px 8px rgba(37, 99, 235, 0.4);
-    }
-
-    .comment-list {
-      margin-top: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .comment {
-      background: #f3f4ff;
-      border-radius: 0.7rem;
-      padding: 0.7rem 0.85rem;
-      font-size: 0.9rem;
-    }
-
-    .comment-header {
-      display: flex;
-      justify-content: space-between;
-      gap: 0.5rem;
-      margin-bottom: 0.25rem;
-      font-weight: 600;
-      color: #374151;
-    }
-
-    .comment-date {
-      font-size: 0.75rem;
-      font-weight: 400;
-      color: #6b7280;
-    }
-
-    footer {
-      text-align: center;
-      font-size: 0.85rem;
-      color: #777;
-      padding-bottom: 2rem;
-    }
-
-    @media (max-width: 600px) {
-      section {
-        border-radius: 0.75rem;
-        padding: 1.2rem;
-      }
-    }
-  </style>
-</head>
-<body>
-  <!-- HEADER / BANNER -->
-  <header class="banner-container">
-    <!-- Use your own banner image file here -->
-    <img src="banner.jpg" alt="Family Memories Banner" class="banner-image" />
-    
-  </header>
-
-  <!-- NAVIGATION -->
-  <nav>
-    <ul>
-      <li><a href="#about">Home</a></li>
-      <li><a href="#photos">Photos</a></li>
-      <li><a href="#videos">Videos</a></li>
-      <li><a href="#comments">Guestbook</a></li>
-    </ul>
-  </nav>
-
-  <main>
-    <!-- HOME / ABOUT -->
-    <section id="about">
-      <h2>Welcome, Family &amp; Friends!</h2>
-      <p class="section-intro">
-        This little site is our spot for collecting stories, photos, and videos from all of our
-        “Hugga Hoops” adventures and family gatherings. Add your memories and say hi in the guestbook below.
-      </p>
-    </section>
-
-    <!-- PHOTOS -->
-    <section id="photos">
-      <h2>Photo Gallery</h2>
-      <p class="section-intro">
-        Add your favorite snapshots from vacations, holidays, and everyday moments.
-      </p>
-
-      <!-- Example static images – replace src with your own files -->
-      <div class="media-grid" id="photoGrid">
-        <div class="media-card">
-          <img src="family_lake.jpg" alt="Family at the lake" />
-          <span>Grandkids on the Bridge</span>
-        </div>
-        <div class="media-card">
-          <img src="cabin_trip.jpg" alt="Cabin trip" />
-          <span>Sunset in Naples</span>
-        </div>
-      </div>
-
-      <!-- Simple client-side "post" (preview-only) -->
-      <p class="upload-hint">
-        Add more pictures (preview only – this doesn’t upload them to a server):
-      </p>
-      <input class="file-input" type="file" accept="image/*" multiple id="photoInput" />
-    </section>
-
-    <!-- VIDEOS -->
-    <section id="videos">
-      <h2>Video Gallery</h2>
-      <p class="section-intro">
-        Share MP4 clips of games, birthdays, and celebrations.
-      </p>
-
-      <!-- Example static videos – replace src with your own MP4 files -->
-      <div class="media-grid" id="videoGrid">
-        <div class="media-card">
-          <video controls>
-            <source src="birthday_2024.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-          <span>Hugga Hoops in the driveway</span>
-        </div>
-      </div>
-
-      <!-- Simple client-side "post" (preview-only) -->
-      <p class="upload-hint">
-        Add more videos (MP4, preview only – files stay on your computer):
-      </p>
-      <input class="file-input" type="file" accept="video/mp4" multiple id="videoInput" />
-    </section>
-
-    <!-- COMMENTS / GUESTBOOK -->
-    <section id="comments">
-      <h2>Guestbook &amp; Comments</h2>
-      <p class="section-intro">
-        Leave a note, a memory, or a shout-out for the family.
-      </p>
-
-      <form class="comment-form" id="commentForm">
-        <input type="text" id="nameInput" placeholder="Your name" required />
-        <textarea id="messageInput" placeholder="Your message" required></textarea>
-        <button type="submit" class="btn">Post Comment</button>
-      </form>
-
-      <div class="comment-list" id="commentList"></div>
-      <p class="upload-hint">
-        Comments are stored in this browser only (using localStorage). To share across devices, you’ll
-        need a small server later.
-      </p>
-    </section>
-  </main>
-
-  <footer>
-    &copy; <span id="year"></span> Our Family. All hugs reserved.
-  </footer>
-
-  <script>
-    // --- FOOTER YEAR ---
-    document.getElementById("year").textContent = new Date().getFullYear();
-
-    // --- PHOTO PREVIEW (client-side only) ---
-    const photoInput = document.getElementById("photoInput");
-    const photoGrid = document.getElementById("photoGrid");
-
-    photoInput.addEventListener("change", (event) => {
-      const files = Array.from(event.target.files);
-      files.forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const card = document.createElement("div");
-          card.className = "media-card";
-          const img = document.createElement("img");
-          img.src = e.target.result;
-          img.alt = file.name;
-          const caption = document.createElement("span");
-          caption.textContent = file.name;
-          card.appendChild(img);
-          card.appendChild(caption);
-          photoGrid.prepend(card);
-        };
-        reader.readAsDataURL(file);
+  // ====== LOAD + INIT GOOGLE APIs ======
+  // Called when gapi script loads
+  window.gapiLoaded = function gapiLoaded() {
+    gapi.load("client", async () => {
+      await gapi.client.init({
+        apiKey: API_KEY,
+        discoveryDocs: [DISCOVERY_DOC],
       });
-      photoInput.value = "";
+      gapiInited = true;
+      maybeEnableAddButton();
+
+      // Try to load galleries immediately (works if folders/files are public)
+      refreshGalleries();
     });
+  };
 
-    // --- VIDEO PREVIEW (client-side only) ---
-    const videoInput = document.getElementById("videoInput");
-    const videoGrid = document.getElementById("videoGrid");
+  // Called when Google Identity script loads
+  window.gisLoaded = function gisLoaded() {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: "", // set dynamically when requesting token
+    });
+    gisInited = true;
+    maybeEnableAddButton();
+  };
 
-    videoInput.addEventListener("change", (event) => {
-      const files = Array.from(event.target.files);
-      files.forEach((file) => {
-        const url = URL.createObjectURL(file);
+  // ====== GALLERY REFRESH ======
+  async function refreshGalleries() {
+    // Best effort: will work fully after login, or for public/shared files without auth
+    await listDriveImages(PHOTO_FOLDER_ID);
+    await listDriveDocs(DOC_FOLDER_ID);
+  }
+
+  async function listDriveImages(folderId) {
+    if (!photoGrid) return;
+
+    photoGrid.innerHTML = "";
+    if (photoStatus) photoStatus.textContent = "Loading photos…";
+
+    try {
+      const res = await gapi.client.drive.files.list({
+        q: `'${folderId}' in parents and trashed=false and mimeType contains 'image/'`,
+        fields: "files(id,name,mimeType,thumbnailLink,webViewLink)",
+        pageSize: 100,
+        orderBy: "createdTime desc",
+      });
+
+      const files = res.result.files || [];
+      if (!files.length) {
+        if (photoStatus) photoStatus.textContent = "No photos found.";
+        return;
+      }
+
+      for (const f of files) {
         const card = document.createElement("div");
         card.className = "media-card";
-        const video = document.createElement("video");
-        video.controls = true;
-        video.src = url;
+
+        const img = document.createElement("img");
+        // thumbnailLink is convenient when authorized; fallback works for public files.
+        img.src = f.thumbnailLink
+          ? f.thumbnailLink.replace("=s220", "=s800")
+          : `https://drive.google.com/uc?export=view&id=${f.id}`;
+        img.alt = f.name;
+
+        img.style.cursor = "pointer";
+        img.addEventListener("click", () => {
+          const url = f.webViewLink || `https://drive.google.com/file/d/${f.id}/view`;
+          window.open(url, "_blank", "noopener");
+        });
+
         const caption = document.createElement("span");
-        caption.textContent = file.name;
-        card.appendChild(video);
+        caption.textContent = f.name;
+
+        card.appendChild(img);
         card.appendChild(caption);
-        videoGrid.prepend(card);
+        photoGrid.appendChild(card);
+      }
+
+      if (photoStatus) photoStatus.textContent = "";
+    } catch (err) {
+      console.error("Error listing Drive images:", err);
+      if (photoStatus) {
+        photoStatus.textContent =
+          "Could not load photos. If you are not logged in, the folder/files may not be public.";
+      }
+    }
+  }
+
+  async function listDriveDocs(folderId) {
+    if (!docGrid) return;
+
+    docGrid.innerHTML = "";
+    if (docStatus) docStatus.textContent = "Loading documents…";
+
+    try {
+      const res = await gapi.client.drive.files.list({
+        q: `'${folderId}' in parents and trashed=false`,
+        fields: "files(id,name,mimeType,webViewLink)",
+        pageSize: 200,
+        orderBy: "createdTime desc",
       });
-      videoInput.value = "";
-    });
 
-    // --- COMMENTS (localStorage-based) ---
-    const commentForm = document.getElementById("commentForm");
-    const commentList = document.getElementById("commentList");
-    const STORAGE_KEY = "familySiteComments";
+      const files = (res.result.files || []).filter((f) => {
+        return f.mimeType !== "application/vnd.google-apps.folder";
+      });
 
-    function loadComments() {
-      const data = localStorage.getItem(STORAGE_KEY);
-      const comments = data ? JSON.parse(data) : [];
-      commentList.innerHTML = "";
-      comments.forEach(addCommentToDOM);
+      if (!files.length) {
+        if (docStatus) docStatus.textContent = "No documents found.";
+        return;
+      }
+
+      for (const f of files) {
+        const card = document.createElement("div");
+        card.className = "media-card";
+
+        const title = document.createElement("span");
+        title.textContent = f.name;
+
+        const link = document.createElement("a");
+        link.href = f.webViewLink || `https://drive.google.com/file/d/${f.id}/view`;
+        link.target = "_blank";
+        link.rel = "noopener";
+        link.textContent = "Open";
+
+        card.appendChild(title);
+        card.appendChild(link);
+        docGrid.appendChild(card);
+      }
+
+      if (docStatus) docStatus.textContent = "";
+    } catch (err) {
+      console.error("Error listing Drive docs:", err);
+      if (docStatus) {
+        docStatus.textContent =
+          "Could not load documents. If you are not logged in, the folder/files may not be public.";
+      }
     }
+  }
 
-    function saveComment(comment) {
-      const data = localStorage.getItem(STORAGE_KEY);
-      const comments = data ? JSON.parse(data) : [];
-      comments.unshift(comment);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(comments));
+  // ====== LOGIN + UPLOAD FLOW ======
+  function hasAccessToken() {
+    try {
+      return !!gapi.client.getToken();
+    } catch {
+      return false;
     }
+  }
 
-    function addCommentToDOM(comment) {
-      const div = document.createElement("div");
-      div.className = "comment";
-
-      const header = document.createElement("div");
-      header.className = "comment-header";
-
-      const nameSpan = document.createElement("span");
-      nameSpan.textContent = comment.name || "Anonymous";
-
-      const dateSpan = document.createElement("span");
-      dateSpan.className = "comment-date";
-      dateSpan.textContent = new Date(comment.date).toLocaleString();
-
-      header.appendChild(nameSpan);
-      header.appendChild(dateSpan);
-
-      const body = document.createElement("div");
-      body.textContent = comment.message;
-
-      div.appendChild(header);
-      div.appendChild(body);
-      commentList.appendChild(div);
+  function setSignedInUI(isSignedIn) {
+    if (signoutButton) signoutButton.style.display = isSignedIn ? "inline-block" : "none";
+    if (photoHint) {
+      photoHint.textContent = isSignedIn
+        ? "Choose photos to upload. They will appear in the gallery."
+        : "To add photos, click the button below. You’ll be asked to sign in with Google once.";
     }
+  }
 
-    commentForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const name = document.getElementById("nameInput").value.trim();
-      const message = document.getElementById("messageInput").value.trim();
-      if (!message) return;
-
-      const comment = {
-        name: name || "Anonymous",
-        message,
-        date: new Date().toISOString()
+  // Main button: login if needed, then open file picker
+  if (addPhotosButton) {
+    addPhotosButton.addEventListener("click", () => {
+      const continueFlow = () => {
+        setSignedInUI(true);
+        if (photoInput) photoInput.click();
       };
 
-      saveComment(comment);
-      commentList.innerHTML = "";
-      loadComments();
-      commentForm.reset();
+      if (!hasAccessToken()) {
+        tokenClient.callback = async (resp) => {
+          if (resp.error) {
+            console.error(resp);
+            alert("Google login failed. Please try again.");
+            return;
+          }
+          // Now authorized — refresh galleries (private folders will load)
+          await refreshGalleries();
+          continueFlow();
+        };
+        tokenClient.requestAccessToken({prompt: "consent"});
+      } else {
+        continueFlow();
+      }
     });
+  }
 
-    loadComments();
-  </script>
-</body>
-</html>
+  // When files are chosen, upload them automatically
+  if (photoInput) {
+    photoInput.addEventListener("change", async () => {
+      const files = Array.from(photoInput.files || []);
+      if (!files.length) return;
 
+      if (addPhotosButton) {
+        addPhotosButton.disabled = true;
+        addPhotosButton.textContent = "Uploading...";
+      }
+
+      try {
+        for (const file of files) {
+          await uploadFileToDrive(file, PHOTO_FOLDER_ID);
+        }
+        await refreshGalleries();
+        alert("Upload complete! New photos should appear in the gallery.");
+      } catch (err) {
+        console.error("Upload error:", err);
+        alert("There was a problem uploading one or more photos.");
+      } finally {
+        photoInput.value = "";
+        if (addPhotosButton) {
+          addPhotosButton.disabled = false;
+          addPhotosButton.textContent = "Add photos (Google login required)";
+        }
+      }
+    });
+  }
+
+  // Optional: sign out button
+  if (signoutButton) {
+    signoutButton.addEventListener("click", () => {
+      const token = gapi.client.getToken();
+      if (token) {
+        google.accounts.oauth2.revoke(token.access_token);
+        gapi.client.setToken("");
+      }
+      setSignedInUI(false);
+      // After signout, attempt to refresh (will show public-only)
+      refreshGalleries();
+    });
+  }
+
+  // ====== UPLOAD IMPLEMENTATION ======
+  async function uploadFileToDrive(file, folderId) {
+    const boundary = "-------314159265358979323846";
+    const delimiter = "\r\n--" + boundary + "\r\n";
+    const closeDelim = "\r\n--" + boundary + "--";
+
+    const metadata = {
+      name: file.name,
+      parents: [folderId],
+    };
+
+    const reader = new FileReader();
+
+    return new Promise((resolve, reject) => {
+      reader.onload = async (e) => {
+        try {
+          const contentType = file.type || "application/octet-stream";
+          const bytes = new Uint8Array(e.target.result);
+
+          // Convert bytes to base64
+          let binary = "";
+          for (let i = 0; i < bytes.length; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          const base64Data = btoa(binary);
+
+          const multipartRequestBody =
+            delimiter +
+            "Content-Type: application/json\r\n\r\n" +
+            JSON.stringify(metadata) +
+            delimiter +
+            "Content-Type: " + contentType + "\r\n" +
+            "Content-Transfer-Encoding: base64\r\n\r\n" +
+            base64Data +
+            closeDelim;
+
+          const response = await gapi.client.request({
+            path: "/upload/drive/v3/files",
+            method: "POST",
+            params: {uploadType: "multipart"},
+            headers: {"Content-Type": "multipart/related; boundary=" + boundary},
+            body: multipartRequestBody,
+          });
+
+          resolve(response.result);
+        } catch (err) {
+          reject(err);
+        }
+      };
+
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
+    });
+  }
+</script>
+
+<!-- Google Identity + GAPI scripts -->
+<script src="https://accounts.google.com/gsi/client" async defer onload="gisLoaded()"></script>
+<script src="https://apis.google.com/js/api.js" async defer onload="gapiLoaded()"></script>
