@@ -1,4 +1,579 @@
-<script>
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Family Memories</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #f4f4f7;
+      color: #222;
+    }
+
+    header {
+      position: relative;
+      text-align: center;
+      color: #fff;
+      padding: 0;
+      overflow: hidden;
+    }
+    .banner-container {
+  max-width: 900px;   /* <— adjust smaller or larger */
+  margin: 0 auto;     /* <— centers the banner */
+  position: relative;
+}
+
+    .banner-image {
+      width: 100%;
+      max-height: 660px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .banner-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.6));
+    }
+
+    .banner-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .banner-text h1 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.3em;
+    }
+
+    .banner-text p {
+      font-size: 1rem;
+      opacity: 0.95;
+    }
+
+    nav {
+      background: #ffffff;
+      border-bottom: 1px solid #e4e4e8;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      padding: 0.75rem 1rem;
+      flex-wrap: wrap;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #444;
+      font-weight: 600;
+      padding: 0.35rem 0.8rem;
+      border-radius: 999px;
+      transition: background 0.2s, color 0.2s, transform 0.1s;
+    }
+
+    nav a:hover {
+      background: #406aff18;
+      color: #2d4f9f;
+      transform: translateY(-1px);
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 1.5rem auto 3rem;
+      padding: 0 1rem;
+    }
+
+    section {
+      background: #ffffff;
+      margin-bottom: 1.5rem;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+    }
+
+    section h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    section p.section-intro {
+      margin-bottom: 1rem;
+      color: #555;
+    }
+
+    .media-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .media-card {
+      background: #f9fafb;
+      border-radius: 0.9rem;
+      padding: 0.6rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .media-card img,
+    .media-card video {
+      width: 100%;
+      border-radius: 0.7rem;
+      display: block;
+    }
+
+    .media-card iframe {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 0.7rem;
+    }
+
+    .media-card span {
+      font-size: 0.85rem;
+      color: #555;
+    }
+
+    .upload-hint {
+      font-size: 0.85rem;
+      color: #777;
+      margin-top: 0.75rem;
+    }
+
+    .file-input {
+      margin-top: 0.5rem;
+    }
+
+    .comment-form {
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .comment-form input,
+    .comment-form textarea {
+      width: 100%;
+      padding: 0.6rem 0.7rem;
+      border-radius: 0.6rem;
+      border: 1px solid #d0d4dd;
+      font: inherit;
+    }
+
+    .comment-form textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .btn {
+      align-self: flex-start;
+      padding: 0.5rem 1.2rem;
+      border-radius: 999px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      background: #315fe4;
+      color: #fff;
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
+      transition: transform 0.08s, box-shadow 0.08s, opacity 0.2s;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #777;
+      padding-bottom: 2rem;
+    }
+
+    @media (max-width: 600px) {
+      section {
+        border-radius: 0.75rem;
+        padding: 1.2rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="banner-container">
+    <!-- Use your own banner image file here -->
+    <img src="banner.jpg" alt="Family Memories Banner" class="banner-image" />
+    
+  </header>
+
+  <nav>
+    <ul>
+      <li><a href="#about">Home</a></li>
+      <li><a href="#photos">Photos</a></li>
+      <li><a href="#documents">Poems</a></li>
+      <li><a href="#videos">Videos</a></li>
+      <li><a href="#comments">Guestbook</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <section id="about">
+      <h2>Welcome, Family &amp; Friends!</h2>
+      <p class="section-intro">
+        This little site is our spot for collecting stories, photos, and videos from all of our
+        “Hugga Hoops” adventures and family gatherings. Add your memories and say hi in the guestbook below.
+      </p>
+    </section>
+
+    <!-- PHOTOS (Google Drive-powered gallery) -->
+    <section id="photos">
+  <h2>Photo Gallery</h2>
+  <p class="section-intro">
+    Photos in this gallery are stored in our shared Google Drive folder.
+  </p>
+
+  <!-- Always-visible gallery from Drive (no login required to view) -->
+  <div class="media-card" style="padding: 0; overflow: hidden;">
+    <iframe
+      src="https://drive.google.com/embeddedfolderview?id=1Ep4A7YqTfClYusea7NamuR1FKO6aW7HK#grid"
+      style="width: 100%; height: 480px; border: 0;"
+    ></iframe>
+  </div>
+      <p style="margin-top: 0.5rem; font-size: 0.9rem;">
+  View full folder:
+  <a
+    href="https://drive.google.com/drive/folders/1Ep4A7YqTfClYusea7NamuR1FKO6aW7HK"
+    target="_blank"
+    rel="noopener"
+  >
+    open in Google Drive
+  </a>
+</p>
+
+
+  <p class="upload-hint" id="photoHint">
+    To add photos, click the button below. You’ll be asked to sign in with Google once.
+  </p>
+
+  <div style="margin-top:0.5rem; display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center;">
+    <button id="driveAddPhotos" class="btn">
+      Add photos (Google login required)
+    </button>
+    <button id="driveSignout" class="btn" style="display:none; background:#9ca3af; box-shadow:none;">
+      Sign out
+    </button>
+  </div>
+
+  <!-- Hidden file input, opened by the button -->
+  <input
+    class="file-input"
+    type="file"
+    accept="image/*"
+    multiple
+    id="photoInput"
+    style="display:none;"
+  />
+</section>
+
+<section id="documents">
+  <h2>Poems, Lyrics, and Other Writings</h2>
+  <p class="section-intro">
+    Download or view shared family documents (Poems, stories, and more).
+  </p>
+
+  <div class="media-card" style="padding: 0; overflow: hidden;">
+    <iframe
+      src="https://drive.google.com/embeddedfolderview?id=1feFodHcNSZa38XUx9lbt08HM2rjq2HsH#list"
+      style="width: 100%; height: 280px; border: 0;"
+    ></iframe>
+  </div>
+
+  <p class="upload-hint">
+    To add documents to this list, upload them into the shared Google Drive folder.
+  </p>
+</section>
+
+
+    <!-- VIDEOS (YouTube playlist + optional MP4) -->
+    <section id="videos">
+  <h2>Video Gallery</h2>
+  <p class="section-intro">
+    Watch our Hugga Hoops and family videos. The playlists update automatically as we add new videos.
+  </p>
+
+  <div class="media-grid" id="videoGrid">
+    <!-- Family playlist -->
+    <div class="media-card">
+      <iframe
+        src="https://www.youtube.com/embed/videoseries?list=PLF0dSSzU0Xsg-JhzeJfeTHygpNXBfZf79"
+        allowfullscreen
+      ></iframe>
+      <span>
+        Our Family YouTube Playlist –
+        <a
+          href="https://www.youtube.com/playlist?list=PLF0dSSzU0Xsg-JhzeJfeTHygpNXBfZf79"
+          target="_blank"
+          rel="noopener"
+        >
+          view on YouTube
+        </a>
+      </span>
+    </div>
+
+    <!-- Joyce Remembrance playlist -->
+    <div class="media-card">
+      <iframe
+        src="https://www.youtube.com/embed/videoseries?list=PLF0dSSzU0Xsj5HYHFoussGBqpDNba2AFE"
+        allowfullscreen
+      ></iframe>
+      <span>
+        Joyce Remembrance YouTube Playlist –
+        <a
+          href="https://www.youtube.com/playlist?list=PLF0dSSzU0Xsj5HYHFoussGBqpDNba2AFE"
+          target="_blank"
+          rel="noopener"
+        >
+          view on YouTube
+        </a>
+      </span>
+    </div>
+
+    <!-- Sailing -->
+    <div class="media-card">
+      <iframe
+        src="https://www.youtube.com/embed/videoseries?list=PLF0dSSzU0XsinmZS6ivlwJ2Tm2KYBLISf"
+        allowfullscreen
+      ></iframe>
+      <span>
+        My Sailing Adventures –
+        <a
+          href="https://www.youtube.com/playlist?list=PLF0dSSzU0XsinmZS6ivlwJ2Tm2KYBLISf"
+          target="_blank"
+          rel="noopener"
+        >
+          view on YouTube
+        </a>
+      </span>
+    </div>
+    <!-- Christmas playlist -->
+    <div class="media-card">
+      <iframe
+        src="https://www.youtube.com/embed/videoseries?list=PLF0dSSzU0XsjEnos5rCRk_2sTKRi6ZPM5"
+        allowfullscreen
+      ></iframe>
+      <span>
+        Christmas YouTube Playlist –
+        <a
+          href="https://www.youtube.com/playlist?list=PLF0dSSzU0XsjEnos5rCRk_2sTKRi6ZPM5"
+          target="_blank"
+          rel="noopener"
+        >
+          view on YouTube
+        </a>
+      </span>
+    </div>
+  <!-- Birthdays -->
+    <div class="media-card">
+      <iframe
+        src="https://www.youtube.com/embed/videoseries?list=PLF0dSSzU0Xsj9SP8xFEwM428yzceDJbjc"
+        allowfullscreen
+      ></iframe>
+      <span>
+        Birthday Songs –
+        <a
+          href="https://www.youtube.com/playlist?list=PLF0dSSzU0Xsj9SP8xFEwM428yzceDJbjc"
+          target="_blank"
+          rel="noopener"
+        >
+          view on YouTube
+        </a>
+      </span>
+    </div>
+ <!-- Selected Songs and Poems -->
+    <div class="media-card">
+      <iframe
+        src="https://www.youtube.com/embed/videoseries?list=PLF0dSSzU0XsjTdV_HaJeqYJJ4O4g6mvW-"
+        allowfullscreen
+      ></iframe>
+      <span>
+        Selected  Songs and Poems Playlist –
+        <a
+          href="https://www.youtube.com/playlist?list=PLF0dSSzU0XsjTdV_HaJeqYJJ4O4g6mvW-"
+          target="_blank"
+          rel="noopener"
+        >
+          view on YouTube
+        </a>
+      </span>
+    </div>
+ 
+  </div>
+</section>
+
+    
+<section id="comments">
+      <h2>Guestbook &amp; Comments</h2>
+      <p class="section-intro">
+        Leave a note, a memory, or a shout-out for the family.
+      </p>
+
+      <form class="comment-form" id="commentForm">
+        <input type="text" id="nameInput" placeholder="Your name" required />
+        <textarea id="messageInput" placeholder="Your message" required></textarea>
+        <button type="submit" class="btn">Post Comment</button>
+      </form>
+
+      <div class="comment-list" id="commentList"></div>
+      <p class="upload-hint">
+        
+      </p>
+    </section>
+      </main>
+
+  <footer>
+    &copy; <span id="year"></span> Our Family. All hugs reserved.
+  </footer>
+
+  <!-- YEAR + COMMENTS VIA FIREBASE -->
+<script type="module">
+  // 1) IMPORT FIREBASE FROM CDN
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    addDoc,
+    serverTimestamp,
+    query,
+    orderBy,
+    onSnapshot
+  } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+
+  // 2) YOUR FIREBASE CONFIG (replace with your actual config)
+  const firebaseConfig = {
+  apiKey: "AIzaSyBoHLyl_H6q4XRo6si-vdy1CnfNHOsVLD8",
+  authDomain: "family-site-final.firebaseapp.com",
+  projectId: "family-site-final",
+  storageBucket: "family-site-final.firebasestorage.app",
+  messagingSenderId: "31882408150",
+  appId: "1:31882408150:web:25ca8ac52bd73ae4d25977"
+};
+
+
+  // 3) INITIALIZE FIREBASE + FIRESTORE
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const commentsCol = collection(db, "comments"); // Firestore collection name
+
+  // 4) BASIC DOM HOOKS
+  const yearSpan    = document.getElementById("year");
+  const commentForm = document.getElementById("commentForm");
+  const commentList = document.getElementById("commentList");
+
+  if (yearSpan) {
+    yearSpan.textContent = new Date().getFullYear();
+  }
+
+  // 5) RENDER A SINGLE COMMENT INTO THE DOM
+  function addCommentToDOM(data) {
+    if (!commentList) return;
+
+    const div = document.createElement("div");
+    div.className = "comment";
+
+    const header = document.createElement("div");
+    header.className = "comment-header";
+
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = data.name || "Anonymous";
+
+    const dateSpan = document.createElement("span");
+    dateSpan.className = "comment-date";
+    if (data.date && data.date.toDate) {
+      dateSpan.textContent = data.date.toDate().toLocaleString();
+    } else {
+      dateSpan.textContent = "";
+    }
+
+    header.appendChild(nameSpan);
+    header.appendChild(dateSpan);
+
+    const body = document.createElement("div");
+    body.textContent = data.message;
+
+    div.appendChild(header);
+    div.appendChild(body);
+    commentList.appendChild(div);
+  }
+
+  // 6) REAL-TIME LISTENER: LOAD COMMENTS FROM FIRESTORE (NEWEST FIRST)
+  if (commentList) {
+    const commentsQuery = query(commentsCol, orderBy("date", "desc"));
+
+    onSnapshot(commentsQuery, (snapshot) => {
+      commentList.innerHTML = "";
+      snapshot.forEach((doc) => {
+        addCommentToDOM(doc.data());
+      });
+    });
+  }
+
+  // 7) HANDLE NEW COMMENT SUBMISSION (SAVE TO FIRESTORE)
+  if (commentForm) {
+    commentForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const nameInput    = document.getElementById("nameInput");
+      const messageInput = document.getElementById("messageInput");
+
+      const name    = (nameInput.value || "").trim();
+      const message = (messageInput.value || "").trim();
+
+      if (!message) return;
+
+      try {
+        await addDoc(commentsCol, {
+          name: name || "Anonymous",
+          message,
+          date: serverTimestamp()
+        });
+
+        commentForm.reset();
+        // No need to manually reload; onSnapshot will update the list
+      } catch (err) {
+        console.error("Error adding comment:", err);
+        alert("Sorry, there was a problem saving your comment.");
+      }
+    });
+  }
+</script>
+
+  <script>
   // ====== GOOGLE DRIVE SETTINGS ======
   const CLIENT_ID = "220214661440-iqhbhncgbg34b6imeeha44pemj3pbf79.apps.googleusercontent.com";
   const API_KEY = "AIzaSyBoHLyl_H6q4XRo6si-vdy1CnfNHOsVLD8";
@@ -325,3 +900,6 @@
 <!-- Google Identity + GAPI scripts -->
 <script src="https://accounts.google.com/gsi/client" async defer onload="gisLoaded()"></script>
 <script src="https://apis.google.com/js/api.js" async defer onload="gapiLoaded()"></script>
+
+</body>
+</html>
