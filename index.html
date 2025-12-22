@@ -335,16 +335,16 @@
         allowfullscreen
       ></iframe>
       <span>
-        Our Family YouTube Playlist –
-        <a
-          href="https://www.youtube.com/playlist?list=PLF0dSSzU0Xsg-JhzeJfeTHygpNXBfZf79"
-          target="_blank"
-          rel="noopener"
-        >
-          view on YouTube
-        </a>
+  Our Family YouTube Playlist (<strong id="count-family">…</strong>) –
+  <a
+    href="https://www.youtube.com/playlist?list=PLF0dSSzU0Xsg-JhzeJfeTHygpNXBfZf79"
+    target="_blank"
+    rel="noopener"
+  >
+    view on YouTube
+  </a>
+</span>
 
-      </span>
     </div>
 
     <!-- Joyce Remembrance playlist -->
@@ -736,5 +736,32 @@
   <!-- Google Identity + GAPI scripts -->
   <script src="https://accounts.google.com/gsi/client" async defer onload="gisLoaded()"></script>
   <script src="https://apis.google.com/js/api.js" async defer onload="gapiLoaded()"></script>
+  <script>
+  // Use the SAME API key you already have (must allow YouTube Data API v3)
+  const YT_API_KEY = "AIzaSyBoHLyl_H6q4XRo6si-vdy1CnfNHOsVLD8";
+
+  async function setPlaylistCount(playlistId, elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    try {
+      const url =
+        "https://www.googleapis.com/youtube/v3/playlists" +
+        `?part=contentDetails&id=${encodeURIComponent(playlistId)}` +
+        `&key=${encodeURIComponent(YT_API_KEY)}`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+      const count = data?.items?.[0]?.contentDetails?.itemCount;
+
+      el.textContent = Number.isInteger(count) ? `${count} videos` : "—";
+    } catch (e) {
+      el.textContent = "—";
+    }
+  }
+
+  setPlaylistCount("PLF0dSSzU0Xsg-JhzeJfeTHygpNXBfZf79", "count-family");
+</script>
+
 </body>
 </html>
